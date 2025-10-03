@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "mqtt": "^5.14.1"
+    "jwt-decode": "^4.0.0",
+    "konva": "^10.0.2",
+    "mqtt": "^5.14.1",
+    "react-konva": "^19.0.10"
   }
 }
