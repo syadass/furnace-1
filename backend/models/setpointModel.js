@@ -1,12 +1,16 @@
 const db = require("../config/db");
 
 const Setpoint = {
-  create: (userID, pressure_value, temperature_value, callback) => {
+  // PERBAIKI: Tambahkan 'furnace_id' sebagai parameter kedua
+  create: (userID, furnace_id, pressure_value, temperature_value, callback) => {
+    // PERBAIKI: Tambahkan kolom 'furnace_id' di dalam query INSERT
     const query = `
-      INSERT INTO setpoint (userID, pressure_value, temperature_value, timestamp)
-      VALUES (?, ?, ?, NOW())
+      INSERT INTO setpoint (userID, furnace_id, pressure_value, temperature_value, timestamp)
+      VALUES (?, ?, ?, ?, NOW())
     `;
-    db.query(query, [userID, pressure_value, temperature_value], callback);
+    
+    // PERBAIKI: Tambahkan variabel 'furnace_id' ke dalam array nilai
+    db.query(query, [userID, furnace_id, pressure_value, temperature_value], callback);
   },
 
   getAll: (callback) => {
