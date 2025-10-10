@@ -1,18 +1,29 @@
 const db = require("../config/db");
 
 const Setpoint = {
-  // PERBAIKI: Tambahkan 'furnace_id' sebagai parameter kedua
-  create: (userID, furnace_id, pressure_value, temperature_value, callback) => {
-    // PERBAIKI: Tambahkan kolom 'furnace_id' di dalam query INSERT
+  /**
+   * Menyimpan data setpoint baru ke database.
+   * @param {object} setpointData - Objek yang berisi userID, furnace_id, dan temperature_value.
+   * @param {function} callback - Fungsi callback untuk menangani hasil query.
+   */
+  create: (setpointData, callback) => {
+    // Ambil nilai dari objek setpointData
+    const { userID, furnace_id, temperature_value } = setpointData;
+
+    // Query INSERT telah diperbarui, 'pressure_value' dihapus
     const query = `
-      INSERT INTO setpoint (userID, furnace_id, pressure_value, temperature_value, timestamp)
-      VALUES (?, ?, ?, ?, NOW())
+      INSERT INTO setpoint (userID, furnace_id, temperature_value, timestamp)
+      VALUES (?, ?, ?, NOW())
     `;
     
-    // PERBAIKI: Tambahkan variabel 'furnace_id' ke dalam array nilai
-    db.query(query, [userID, furnace_id, pressure_value, temperature_value], callback);
+    // Array nilai juga disesuaikan
+    db.query(query, [userID, furnace_id, temperature_value], callback);
   },
 
+  /**
+   * Mengambil semua data setpoint.
+   * @param {function} callback - Fungsi callback.
+   */
   getAll: (callback) => {
     db.query("SELECT * FROM setpoint ORDER BY timestamp DESC", callback);
   }

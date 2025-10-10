@@ -1,28 +1,30 @@
-// backend/controllers/setpointController.js
-
 const Setpoint = require('../models/setpointModel');
 const { getClient } = require('../services/mqttService');
 
 /**
- * Membuat dan menyimpan setpoint baru, lalu mempublikasikannya ke MQTT.
+ * Membuat dan menyimpan setpoint baru dengan nilai suhu default, lalu mempublikasikannya ke MQTT.
  */
 exports.createSetpoint = (req, res) => {
-  // 1. Ambil data dari body request. 'pressure_value' akan bernilai 0 dari frontend.
-  const { userID, pressure_value, temperature_value, furnace_id } = req.body;
-
-  // 2. Lakukan validasi, fokus pada data yang penting (suhu).
-  if (!userID || temperature_value === undefined || !furnace_id) {
+  // 1. Ambil data dari body request.
+  const { userID, furnace_id, temperature_value } = req.body; // Terima juga temperature_value dari frontend
+  
+  // 2. Lakukan validasi data.
+  if (!userID || !furnace_id || temperature_value === undefined) {
     return res.status(400).json({ 
       success: false, 
-      message: "Data tidak lengkap. Pastikan userID, temperature_value, dan furnace_id terisi." 
+      message: "Data tidak lengkap. Pastikan userID, furnace_id, dan temperature_value terisi." 
     });
   }
 
-  // 3. (Untuk Debugging) Tampilkan data di console
-  console.log('DEBUG: Data setpoint yang diterima:', { userID, furnace_id, pressure_value, temperature_value });
+  // 3. Siapkan data sebagai satu objek untuk disimpan. 'pressure_value' telah dihapus.
+  const setpointData = {
+    userID,
+    furnace_id,
+    temperature_value, // Gunakan nilai suhu dari frontend
+  };
 
-  // 4. Panggil fungsi create dari model untuk menyimpan data ke database
-  Setpoint.create(userID, furnace_id, pressure_value, temperature_value, (err, result) => {
+  // 4. Panggil fungsi create dari model dengan SATU objek data.
+  Setpoint.create(setpointData, (err, result) => {
     if (err) {
       console.error("❌ Gagal menyimpan setpoint ke database:", err);
       return res.status(500).json({ 
@@ -33,23 +35,19 @@ exports.createSetpoint = (req, res) => {
 
     console.log(`💾 Setpoint berhasil disimpan ke DB. ID: ${result.insertId}`);
     
-    // 5. Setelah berhasil disimpan, publikasikan ke MQTT
+    // 5. Setelah berhasil disimpan, publikasikan ke MQTT.
     try {
       const mqttClient = getClient();
       const topic = `setpoint/furnace/${furnace_id}`;
       
-      // --- PERUBAHAN UTAMA: Payload MQTT sekarang hanya berisi 'suhu' ---
       const payload = JSON.stringify({
-        suhu: temperature_value
+        suhu: temperature_value // Kirim suhu yang diterima dari frontend
       });
 
       mqttClient.publish(topic, payload, { qos: 1 }, (publishErr) => {
         const responseData = { 
           id: result.insertId, 
-          userID, 
-          furnace_id, 
-          pressure_value, 
-          temperature_value 
+          ...setpointData
         };
 
         if (publishErr) {
@@ -88,7 +86,7 @@ exports.getSetpoints = (req, res) => {
       console.error("❌ Gagal mengambil data setpoint:", err);
       return res.status(500).json({ 
         success: false, 
-        message: "Terjadi kesalahan pada server."
+        message: "Terjadi kesalahan pada server." 
       });
     }
     res.status(200).json({ 
