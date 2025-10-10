@@ -62,11 +62,10 @@ export default function DaftarOperator() {
   return (
     <div className="flex min-h-screen bg-blue-100">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ml-64 pt-[60px]"> 
         <Header />
-
         <div className="p-6 flex-1">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: "#3674B5" }}>
+          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">
             Tambah Data Operator
           </h2>
 
@@ -75,17 +74,15 @@ export default function DaftarOperator() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
               <button
                 onClick={() => navigate("/admin/form-tambah")}
-                className="flex items-center gap-2 text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition"
-                style={{ backgroundColor: "#3674B5" }}
+                className="flex items-center gap-2 text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition bg-gradient-to-r from-[#3674B5] to-[#133E87]"
               >
-                <FaPlus />
-                Tambah Data
+                <FaPlus /> Tambah Data
               </button>
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600">Cari:</label>
                 <input
                   type="text"
-                  placeholder="Ketik untuk mencari..."
+                  placeholder="Cari..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -122,7 +119,7 @@ export default function DaftarOperator() {
               <p>Loading data...</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full rounded-lg overflow-hidden">
+                <table className="w-full rounded-lg overflow-hidden shadow-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-200 to-gray-300 text-left">
                       <th className="p-3">No.</th>
@@ -136,7 +133,7 @@ export default function DaftarOperator() {
                     {currentOperators.map((op, i) => (
                       <tr
                         key={op.userID}
-                        className={`transition hover:bg-blue-50 ${
+                        className={`transition-all duration-300 hover:bg-blue-50 cursor-pointer ${
                           i % 2 === 0 ? "bg-gray-100" : "bg-white"
                         }`}
                       >
@@ -145,33 +142,33 @@ export default function DaftarOperator() {
                         <td className="p-3">{op.username}</td>
                         <td className="p-3">{op.NIM}</td>
                         <td className="p-3 flex gap-2 justify-center">
+                          {/* Tombol Edit */}
                           <button
                             onClick={() =>
                               navigate(`/admin/form-edit/${op.userID}`)
                             }
-                            className="flex items-center gap-2 px-4 py-2 text-white rounded-lg shadow-md transition hover:opacity-90"
-                            style={{ backgroundColor: "#3674B5" }}
+                            className="flex items-center gap-2 px-4 py-2 text-white rounded-lg shadow-md transition transform hover:scale-105 hover:opacity-90 bg-gradient-to-r from-[#3674B5] to-[#133E87]"
                           >
-                            <FaEdit />
-                            Edit
+                            <FaEdit /> Edit
                           </button>
+
+                          {/* Tombol Hapus */}
                           <button
                             onClick={() =>
                               handleDelete(op.userID, op.nama_lengkap)
                             }
                             disabled={loadingDelete === op.userID}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white shadow-md transition ${
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white shadow-md transition transform hover:scale-105 ${
                               loadingDelete === op.userID
                                 ? "bg-red-300 cursor-not-allowed"
-                                : "bg-red-600 hover:bg-red-700"
+                                : "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600"
                             }`}
                           >
                             {loadingDelete === op.userID ? (
                               "Menghapus..."
                             ) : (
                               <>
-                                <FaTrash />
-                                Hapus
+                                <FaTrash /> Hapus
                               </>
                             )}
                           </button>
@@ -196,42 +193,35 @@ export default function DaftarOperator() {
             {/* Info bawah + Pagination */}
             <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm text-gray-600">
               <p>
-                Lihat {startIndex + 1} sampai{" "}
-                {Math.min(startIndex + entries, filteredOperators.length)} dari{" "}
-                {filteredOperators.length} entri
+                Lihat {filteredOperators.length === 0 ? 0 : startIndex + 1} dari {filteredOperators.length} entri
               </p>
-
-              {/* Pagination */}
               <div className="flex items-center gap-2 mt-2 md:mt-0">
-                {/* Tombol Previous */}
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
-                  className={`p-2 ${
+                  className={`p-2 rounded-full transition ${
                     currentPage === 1
                       ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-600 hover:text-gray-800"
+                      : "text-gray-600 hover:text-gray-800 hover:scale-110"
                   }`}
                 >
                   <FaChevronLeft size={16} />
                 </button>
 
-                {/* Nomor Halaman */}
                 <div
-                  className="px-3 py-1 text-white font-medium rounded"
+                  className="px-3 py-1 text-white font-medium rounded-lg shadow"
                   style={{ backgroundColor: "#3674B5" }}
                 >
                   {currentPage}
                 </div>
 
-                {/* Tombol Next */}
                 <button
                   disabled={currentPage === totalPages || totalPages === 0}
                   onClick={() => setCurrentPage((p) => p + 1)}
-                  className={`p-2 ${
+                  className={`p-2 rounded-full transition ${
                     currentPage === totalPages || totalPages === 0
                       ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-600 hover:text-gray-800"
+                      : "text-gray-600 hover:text-gray-800 hover:scale-110"
                   }`}
                 >
                   <FaChevronRight size={16} />

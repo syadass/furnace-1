@@ -46,7 +46,6 @@ export default function TambahOperator() {
 
       setMessage("✅ Operator berhasil ditambahkan!");
 
-      // Reset form dan redirect ke halaman Tambah Operator
       setTimeout(() => {
         setFormData({
           namaLengkap: "",
@@ -68,7 +67,6 @@ export default function TambahOperator() {
   };
 
   const handleCancel = () => {
-    // Tombol batal langsung kembali ke halaman Tambah Operator
     setFormData({
       namaLengkap: "",
       email: "",
@@ -85,11 +83,11 @@ export default function TambahOperator() {
     <div className="flex min-h-screen bg-blue-100">
       <Sidebar />
 
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col ml-64 pt-[60px]"> 
         <Header />
 
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: "#3674B5" }}>
+          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">
             Tambah Data Operator
           </h2>
 
@@ -192,17 +190,19 @@ export default function TambahOperator() {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ backgroundColor: "#3674B5" }}
-                className={`px-4 py-2 rounded text-white ${
-                  loading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
+                className={`flex items-center justify-center px-4 py-2 text-white rounded-lg shadow-md transition transform ${
+                  loading
+                    ? "opacity-50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#3674B5] to-[#133E87] hover:opacity-90 hover:scale-105"
                 }`}
               >
                 {loading ? "Proses..." : "Tambah"}
               </button>
+
               <button
                 type="button"
                 onClick={handleCancel}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                className="flex items-center justify-center px-4 py-2 text-white rounded-lg shadow-md bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 transition transform hover:scale-105"
               >
                 Batal
               </button>

@@ -21,7 +21,6 @@ export default function FormEdit() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Ambil data user
   useEffect(() => {
     axios
       .get(`http://localhost:5000/api/users/${id}`)
@@ -82,10 +81,10 @@ export default function FormEdit() {
   return (
     <div className="flex min-h-screen bg-blue-100">
       <Sidebar />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col ml-64 pt-[60px]"> 
         <Header />
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: "#3674B5" }}>Edit User</h2>
+          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">Edit User</h2>
           {message && (
             <div
               className={`mb-4 p-3 rounded ${
@@ -178,7 +177,7 @@ export default function FormEdit() {
               >
                 <option value="operator">Operator</option>
                 <option value="viewer">Viewer</option>
-                <option value="admin">admin</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
 
@@ -187,18 +186,19 @@ export default function FormEdit() {
               <button
                 type="submit"
                 disabled={submitting}
-                className={`px-4 py-2 rounded text-white ${
+                className={`flex items-center justify-center px-4 py-2 text-white rounded-lg shadow-md transition transform ${
                   submitting
-                    ? "bg-blue-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    ? "opacity-50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#3674B5] to-[#133E87] hover:opacity-90 hover:scale-105"
                 }`}
               >
                 {submitting ? "Proses..." : "Update"}
               </button>
+
               <button
                 type="button"
                 onClick={handleCancel}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                className="flex items-center justify-center px-4 py-2 text-white rounded-lg shadow-md bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 transition transform hover:scale-105"
               >
                 Batal
               </button>

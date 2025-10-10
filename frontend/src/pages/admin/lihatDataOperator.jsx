@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/admin/sidebar";
 import Header from "../../components/admin/header";
 
+
 export default function LihatDataOperator() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function LihatDataOperator() {
         <p>Data operator tidak ditemukan.</p>
         <button
           onClick={() => navigate(-1)}
-          className="mt-4 bg-blue-500 text-white px-3 py-1 rounded"
+          className="flex items-center justify-center px-4 py-2 text-white rounded-lg shadow-md bg-gradient-to-r from-[#3674B5] to-[#133E87] hover:opacity-90 hover:scale-105 transition transform"
         >
           Kembali
         </button>
@@ -25,11 +26,11 @@ export default function LihatDataOperator() {
   return (
     <div className="flex min-h-screen bg-blue-100">
       <Sidebar />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col ml-64 pt-[60px]">
         <Header />
 
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: "#3674B5" }}>
+          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">
             Detail Operator
           </h2>
 
@@ -78,12 +79,12 @@ export default function LihatDataOperator() {
               />
             </div>
 
-            {/* Password */}
+            {/* Password (plaintext) */}
             <div>
               <label className="block mb-2 font-medium">Password:</label>
               <input
-                type="password"
-                value={operator.password || "********"}
+                type="text"
+                value={operator.password ?? ""}
                 readOnly
                 className="w-full p-2 border rounded shadow-sm bg-gray-100"
               />
@@ -104,12 +105,7 @@ export default function LihatDataOperator() {
             <div className="col-span-2 flex justify-end mt-4">
               <button
                 onClick={() => navigate(-1)}
-                className="text-white px-4 py-2 rounded"
-                style={{
-                  backgroundColor: "#3674B5",
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#2e5da0")}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#3674B5")}
+                className="flex items-center justify-center px-4 py-2 text-white rounded-lg shadow-md bg-gradient-to-r from-[#3674B5] to-[#133E87] hover:opacity-90 hover:scale-105 transition transform"
               >
                 Kembali
               </button>
