@@ -1,6 +1,7 @@
+// logmonitoring.jsx
+
 import { useEffect, useState, useMemo } from "react";
 import Header from "../../components/operator/header";
-// Menambah ikon untuk Ringkasan Statistik
 import { Download, Calendar, HardHat, ChevronDown, User, Search, Loader2, Gauge, CheckCircle } from "lucide-react"; 
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -13,7 +14,7 @@ const LogMonitoring = () => {
     // State untuk menyimpan daftar semua tanggal unik dan ID tungku yang tersedia
     const [availableLogs, setAvailableLogs] = useState({});
     const [currentUser, setCurrentUser] = useState(null);
-    const [fullName, setFullName] = useState("Memuat...");
+    const [fullName, setFullName] = useState("Memuat..."); // <-- Akan diisi dari data log
 
     // State untuk kontrol download
     const [selectedDate, setSelectedDate] = useState(null);
@@ -21,7 +22,7 @@ const LogMonitoring = () => {
     const [isFurnaceDropdownOpen, setIsFurnaceDropdownOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // --- LOGIKA UTAMA (TIDAK BERUBAH DARI PERBAIKAN SEBELUMNYA) ---
+    // --- LOGIKA UTAMA: FETCH DAN GROUPING LOGS ---
     useEffect(() => {
         const token = localStorage.getItem("token");
         let decodedToken = null;
@@ -30,7 +31,9 @@ const LogMonitoring = () => {
             try {
                 decodedToken = jwtDecode(token);
                 setCurrentUser(decodedToken);
-                setFullName(decodedToken.nama_lengkap || decodedToken.name || "Operator");
+                // Mengatur nama default sementara, akan diperbarui setelah fetch log
+                setFullName("Operator"); 
+                
             } catch (error) {
                 console.error("Invalid token:", error);
             }
@@ -38,19 +41,31 @@ const LogMonitoring = () => {
 
         const fetchAndGroupLogs = async () => {
             if (!token || !decodedToken) {
-                 setFullName("Pengguna Tidak Terotentikasi");
-                 return;
+                setFullName("Pengguna Tidak Terotentikasi");
+                return;
             }
             setIsLoading(true);
             try {
-                const res = await axios.get("http://localhost:5000/api/logs", {
+                // Memanggil endpoint yang sudah difilter oleh backend (dan sudah JOIN nama_lengkap)
+                const res = await axios.get(`http://localhost:5000/api/logs/user/${decodedToken.id}`, {
                     headers: { 'x-auth-token': token }
                 });
 
-                const userLogs = res.data.filter(log => log.userID === decodedToken.id);
+                const userLogs = res.data;
+
+                // *** PERUBAHAN UTAMA DI SINI: MENGAMBIL NAMA LENGKAP DARI DATA LOG ***
+                if (userLogs.length > 0 && userLogs[0].nama_lengkap) {
+                    setFullName(userLogs[0].nama_lengkap);
+                } else {
+                    // Jika data log tidak ada atau nama_lengkap tidak ditemukan, kembali ke nama default/token
+                    setFullName(decodedToken.nama_lengkap || decodedToken.name || "Operator");
+                }
+                // *******************************************************************
+
 
                 const groups = userLogs.reduce((acc, log) => {
                     if (!log.timestamp || !log.furnace_id) return acc;
+                    // Ambil bagian tanggal saja (YYYY-MM-DD)
                     const dateKey = log.timestamp.split('T')[0];
                     if (!acc[dateKey]) {
                         acc[dateKey] = new Set();
@@ -65,6 +80,7 @@ const LogMonitoring = () => {
                 }
                 setAvailableLogs(finalGroups);
 
+                // Atur default pilihan ke tanggal dan tungku terbaru
                 const dates = Object.keys(finalGroups).sort((a, b) => new Date(b) - new Date(a));
                 if (dates.length > 0) {
                     const latestDate = new Date(dates[0]);
@@ -92,7 +108,7 @@ const LogMonitoring = () => {
 
     }, []);
 
-    // LOGIKA MEMOISASI DAN HANDLER (TIDAK BERUBAH)
+    // LOGIKA MEMOISASI DAN HANDLER
     const availableDates = useMemo(() => {
         return Object.keys(availableLogs).map(dateStr => new Date(dateStr));
     }, [availableLogs]);
@@ -103,7 +119,6 @@ const LogMonitoring = () => {
         return availableLogs[dateKey] || [];
     }, [selectedDate, availableLogs]);
 
-    // Hitung total tungku unik yang pernah dicatat oleh user ini
     const totalUniqueFurnaces = useMemo(() => {
         const uniqueFurnaces = new Set();
         Object.values(availableLogs).forEach(furnaces => {
@@ -121,7 +136,6 @@ const LogMonitoring = () => {
     }, [selectedDate, availableLogs]);
 
     const handleDownload = async () => {
-        // ... (Kode handleDownload sama seperti sebelumnya)
         const token = localStorage.getItem('token');
         if (!token || !selectedDate || !selectedFurnace) {
             alert('Harap otentikasi/pilihan belum lengkap.');
@@ -163,11 +177,9 @@ const LogMonitoring = () => {
         setSelectedDate(date);
     };
 
-    // Style untuk tampilan Card yang menarik (3D/Shadow kuat)
     const CardStyle = "bg-white p-6 md:p-10 rounded-2xl shadow-xl lg:shadow-2xl border-t-8 border-blue-600 transition-all duration-300 hover:shadow-2xl hover:border-blue-700 transform hover:-translate-y-0.5";
 
     return (
-        // Latar belakang diubah sedikit dari gray-50 ke gray-100 agar lebih kontras
         <div className="min-h-screen bg-sky-100 font-sans">
             <Header />
             <div className="p-4 md:p-8 max-w-5xl mx-auto">
@@ -177,11 +189,11 @@ const LogMonitoring = () => {
                     <h1 className="text-3xl font-bold text-gray-800">Monitor Log Harian</h1>
                     <div className="flex items-center text-md text-gray-700 font-semibold mt-3 md:mt-0 p-2 bg-white rounded-lg shadow-md border border-gray-200">
                         <User size={20} className="mr-2 text-blue-600" />
-                        Operator: <span className="ml-1 text-blue-700 font-bold">{fullName} {currentUser?.id && `(ID: ${currentUser.id})`}</span>
+                        Operator: <span className="ml-1 text-blue-700 font-bold">{fullName} {currentUser?.id && fullName !== "Pengguna Tidak Terotentikasi" && `(ID: ${currentUser.id})`}</span>
                     </div>
                 </div>
 
-                {/* --- BAGIAN BARU: RINGKASAN LOG (Dashboard Mini) --- */}
+                {/* --- BAGIAN RINGKASAN LOG --- */}
                 <h2 className="text-xl font-bold text-gray-700 mb-4 flex items-center">
                     <Gauge size={20} className="mr-2 text-gray-500" /> Ringkasan Ketersediaan Log
                 </h2>
@@ -203,8 +215,6 @@ const LogMonitoring = () => {
                         </div>
                     </div>
                 </div>
-                {/* --- AKHIR BAGIAN BARU --- */}
-
 
                 {/* Kontainer Pilihan Download */}
                 <div className={CardStyle}>

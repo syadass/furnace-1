@@ -46,27 +46,33 @@ export default function TambahOperator() {
 
       setMessage("✅ Operator berhasil ditambahkan!");
 
+      // Clear the form data
+      setFormData({
+        namaLengkap: "",
+        email: "",
+        username: "",
+        password: "",
+        nim: "",
+        confirmPassword: "",
+      });
+
+      // Navigate back to the previous page after 1 second
       setTimeout(() => {
-        setFormData({
-          namaLengkap: "",
-          email: "",
-          username: "",
-          password: "",
-          nim: "",
-          confirmPassword: "",
-        });
-        navigate("/admin/form-tambah");
+        // PERBAIKAN: Menggunakan navigate(-1) untuk kembali ke halaman sebelumnya
+        navigate(-1); 
       }, 1000);
 
     } catch (error) {
       console.error("Error:", error.response || error.message);
-      setMessage("❌ Gagal menambahkan operator!");
+      const errorMessage = error.response?.data?.message || "❌ Gagal menambahkan operator! Terjadi kesalahan pada server atau jaringan.";
+      setMessage(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
+    // Clear form and message (optional, but good practice)
     setFormData({
       namaLengkap: "",
       email: "",
@@ -76,7 +82,9 @@ export default function TambahOperator() {
       confirmPassword: "",
     });
     setMessage("");
-    navigate("/admin/form-tambah");
+    
+    // PERBAIKAN: Menggunakan navigate(-1) untuk kembali ke halaman sebelumnya
+    navigate(-1);
   };
 
   return (
