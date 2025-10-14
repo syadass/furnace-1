@@ -1,5 +1,3 @@
-// backend/services/mqttService.js
-
 const mqtt = require('mqtt');
 const LogData = require('../models/logModel');
 const db = require('../config/db');
@@ -9,9 +7,8 @@ let client;
 // Objek untuk melacak waktu log terakhir per furnace (untuk throttling)
 const lastLogTime = {};
 
-// BARU: Tentukan interval logging dalam milidetik.
-// 5 menit = 5 * 60 detik * 1000 milidetik
-const LOG_INTERVAL_MS = 5 * 1000; // <-- INI NILAI BARUNYA (300000)
+// interval logging dalam milidetik.
+const LOG_INTERVAL_MS = 5 * 1000; 
 
 const connectAndSubscribe = () => {
   const brokerUrl = process.env.MQTT_BROKER_URL;
@@ -43,16 +40,9 @@ const connectAndSubscribe = () => {
         const now = Date.now();
         const lastTime = lastLogTime[furnaceId] || 0;
 
-        // =======================================================
-        // == 👇 INTI PERUBAHAN ADA DI SINI 👇 ==
-        // =======================================================
-        // Cek apakah selisih waktu sekarang dengan waktu log terakhir
-        // sudah melebihi interval yang ditentukan (5 menit).
         if (now - lastTime > LOG_INTERVAL_MS) { 
-          // Jika ya, update waktu log terakhir ke waktu sekarang
           lastLogTime[furnaceId] = now;
 
-          // Query untuk mendapatkan user yang sedang aktif
           const statusQuery = `
             SELECT 
                 fs.active_userID,
@@ -90,12 +80,9 @@ const connectAndSubscribe = () => {
                 }
               });
             } else {
-              // Log ini bisa dihapus jika terlalu berisik
-              // console.log(`- Data dari furnace ${furnaceId} diabaikan (tidak ada sesi aktif).`);
             }
           });
         }
-        // Jika belum 5 menit, maka data yang masuk akan diabaikan dan tidak disimpan.
       }
     } catch (e) {
       console.error('❌ Gagal mem-parsing payload JSON:', e);

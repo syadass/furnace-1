@@ -29,4 +29,20 @@ const Setpoint = {
   }
 };
 
+  // ===================================================
+  // == PENAMBAHAN: FUNGSI UNTUK MENGHAPUS DATA LAMA ==
+  // ===================================================
+  /**
+   * Menghapus data setpoint yang lebih tua dari N hari.
+   * @param {number} days - Jumlah hari minimum umur data sebelum dihapus.
+   * @param {function} callback - Fungsi callback.
+   */
+  cleanOldSetpoints: (days, callback) => {
+    const query = `
+        DELETE FROM setpoint
+        WHERE timestamp < DATE_SUB(NOW(), INTERVAL ? DAY)
+    `;
+    db.query(query, [days], callback);
+  }
+
 module.exports = Setpoint;

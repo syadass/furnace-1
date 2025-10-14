@@ -1,5 +1,3 @@
-// file: backend/routes/authRoutes.js
-
 const express = require('express');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware'); // Pastikan Anda punya middleware ini

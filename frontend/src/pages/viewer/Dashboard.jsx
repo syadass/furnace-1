@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import Header from "../../components/operator/header"; 
+import Header from "../../components/viewer/header"; 
 import { MQTTService } from "../../services/mqttService";
 
-// ====================================================================
-// == 🎨 SCADA GLOBAL STYLES (Animasi & Efek Visual 3D) ==
-// ====================================================================
+//custom scada
 const ScadaStyles = () => (
     <style>{`
         /* Putaran kipas lambat */
@@ -49,9 +47,7 @@ const ScadaStyles = () => (
     `}</style>
 );
 
-// ====================================================================
-// == 🌡️ KOMPONEN VISUAL (TIDAK ADA PERUBAHAN) ==
-// ====================================================================
+//thermometer
 const ThermometerVisual = ({ value = 0, max = 100 }) => {
     const fillPercentage = Math.max(0, Math.min((value / max) * 100, 100));
     return (
@@ -72,6 +68,7 @@ const ThermometerVisual = ({ value = 0, max = 100 }) => {
     );
 };
 
+//pressure gauge
 const PressureGaugeVisual = ({ value = 0, max = 10 }) => {
     const angle = Math.max(-135, Math.min((value / max) * 270 - 135, 135));
     return (
@@ -94,6 +91,7 @@ const PressureGaugeVisual = ({ value = 0, max = 10 }) => {
     );
 };
 
+//furnace 
 const FurnaceAssembly = ({ furnaceName, pressureValue, pressureMax, isActive = false }) => {
     return (
         <div className="flex flex-col items-center relative pt-12">
@@ -120,9 +118,7 @@ const FurnaceAssembly = ({ furnaceName, pressureValue, pressureMax, isActive = f
     );
 };
 
-// ====================================================================
-// == 🧭 DASHBOARD VIEWER (READ-ONLY) ==
-// ====================================================================
+//dashboard utama
 const ViewerDashboard = () => {
     const [user, setUser] = useState(null);
     const [liveData, setLiveData] = useState({

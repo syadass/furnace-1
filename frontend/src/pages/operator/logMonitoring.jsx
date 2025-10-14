@@ -1,5 +1,3 @@
-// logmonitoring.jsx
-
 import { useEffect, useState, useMemo } from "react";
 import Header from "../../components/operator/header";
 import { Download, Calendar, HardHat, ChevronDown, User, Search, Loader2, Gauge, CheckCircle } from "lucide-react"; 
@@ -11,10 +9,9 @@ import { format } from 'date-fns';
 import id from 'date-fns/locale/id';
 
 const LogMonitoring = () => {
-    // State untuk menyimpan daftar semua tanggal unik dan ID tungku yang tersedia
     const [availableLogs, setAvailableLogs] = useState({});
     const [currentUser, setCurrentUser] = useState(null);
-    const [fullName, setFullName] = useState("Memuat..."); // <-- Akan diisi dari data log
+    const [fullName, setFullName] = useState("Memuat..."); 
 
     // State untuk kontrol download
     const [selectedDate, setSelectedDate] = useState(null);
@@ -22,7 +19,6 @@ const LogMonitoring = () => {
     const [isFurnaceDropdownOpen, setIsFurnaceDropdownOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // --- LOGIKA UTAMA: FETCH DAN GROUPING LOGS ---
     useEffect(() => {
         const token = localStorage.getItem("token");
         let decodedToken = null;
@@ -31,7 +27,6 @@ const LogMonitoring = () => {
             try {
                 decodedToken = jwtDecode(token);
                 setCurrentUser(decodedToken);
-                // Mengatur nama default sementara, akan diperbarui setelah fetch log
                 setFullName("Operator"); 
                 
             } catch (error) {
@@ -46,26 +41,22 @@ const LogMonitoring = () => {
             }
             setIsLoading(true);
             try {
-                // Memanggil endpoint yang sudah difilter oleh backend (dan sudah JOIN nama_lengkap)
+                // Memanggil endpoint yang sudah difilter oleh backend 
                 const res = await axios.get(`http://localhost:5000/api/logs/user/${decodedToken.id}`, {
                     headers: { 'x-auth-token': token }
                 });
 
                 const userLogs = res.data;
 
-                // *** PERUBAHAN UTAMA DI SINI: MENGAMBIL NAMA LENGKAP DARI DATA LOG ***
                 if (userLogs.length > 0 && userLogs[0].nama_lengkap) {
                     setFullName(userLogs[0].nama_lengkap);
                 } else {
-                    // Jika data log tidak ada atau nama_lengkap tidak ditemukan, kembali ke nama default/token
                     setFullName(decodedToken.nama_lengkap || decodedToken.name || "Operator");
                 }
-                // *******************************************************************
 
 
                 const groups = userLogs.reduce((acc, log) => {
                     if (!log.timestamp || !log.furnace_id) return acc;
-                    // Ambil bagian tanggal saja (YYYY-MM-DD)
                     const dateKey = log.timestamp.split('T')[0];
                     if (!acc[dateKey]) {
                         acc[dateKey] = new Set();
@@ -80,7 +71,6 @@ const LogMonitoring = () => {
                 }
                 setAvailableLogs(finalGroups);
 
-                // Atur default pilihan ke tanggal dan tungku terbaru
                 const dates = Object.keys(finalGroups).sort((a, b) => new Date(b) - new Date(a));
                 if (dates.length > 0) {
                     const latestDate = new Date(dates[0]);
@@ -108,7 +98,6 @@ const LogMonitoring = () => {
 
     }, []);
 
-    // LOGIKA MEMOISASI DAN HANDLER
     const availableDates = useMemo(() => {
         return Object.keys(availableLogs).map(dateStr => new Date(dateStr));
     }, [availableLogs]);

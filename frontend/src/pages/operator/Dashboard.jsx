@@ -5,9 +5,7 @@ import Header from "../../components/operator/header";
 import { MQTTService } from "../../services/mqttService";
 
 
-// ====================================================================
-// == 🎨 SCADA GLOBAL STYLES (Animasi & Efek Visual 3D) ==
-// ====================================================================
+//custom scada
 const ScadaStyles = () => (
     <style>{`
         /* Putaran kipas lambat */
@@ -80,9 +78,7 @@ const ScadaStyles = () => (
     `}</style>
 );
 
-// ====================================================================
-// == 🌡️ THERMOMETER VISUAL (3D) ==
-// ====================================================================
+//thermometer
 const ThermometerVisual = ({ value = 0, max = 100 }) => {
     const fillPercentage = Math.max(0, Math.min((value / max) * 100, 100));
     return (
@@ -113,9 +109,7 @@ const ThermometerVisual = ({ value = 0, max = 100 }) => {
     );
 };
 
-// ====================================================================
-// == ⏲️ PRESSURE GAUGE VISUAL (3D) ==
-// ====================================================================
+//pressure gauge
 const PressureGaugeVisual = ({ value = 0, max = 10 }) => {
     const angle = Math.max(-135, Math.min((value / max) * 270 - 135, 135));
     return (
@@ -181,10 +175,7 @@ const PressureGaugeVisual = ({ value = 0, max = 10 }) => {
     );
 };
 
-
-// ====================================================================
-// == 🔥 FURNACE ASSEMBLY VISUAL (3D + Efek Panas) ==
-// ====================================================================
+//furnace assembly
 const FurnaceAssembly = ({
     furnaceName, 
     pressureValue, 
@@ -272,8 +263,7 @@ const FurnaceAssembly = ({
 };
 
 
-// ====================================================================
-// == 🧭 DASHBOARD UTAMA ==
+// dashboard
 
 const Dashboard = () => {
     const [user, setUser] = useState(null);
@@ -291,30 +281,25 @@ const Dashboard = () => {
 
     const [isConnected, setIsConnected] = useState(false);
     const [furnaceStatuses, setFurnaceStatuses] = useState({});
-    // BARU: State untuk menangani proses loading dan error
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
     const mqttServiceRef = useRef(null);
     const furnaceList = ["furnace1", "furnace2", "furnace3"];
     
-    // Mengambil data pengguna dari token JWT saat komponen pertama kali dimuat
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             try {
                 const decodedToken = jwtDecode(token);
-                // console.log("ISI SEBENARNYA DARI TOKEN:", decodedToken); 
                 setUser(decodedToken); 
             } catch (error) {
                 console.error("GAGAL DECODE TOKEN:", error);
-                // BARU: Set error dan hentikan loading
                 setError("Sesi Anda tidak valid. Silakan login kembali.");
                 setIsLoading(false);
             }
         } else {
             console.log("Token tidak ditemukan di Local Storage.");
-            // BARU: Set error dan hentikan loading
             setError("Anda harus login untuk mengakses halaman ini.");
             setIsLoading(false);
         }
@@ -335,33 +320,23 @@ const Dashboard = () => {
         } catch (err) { console.error("Gagal mengambil status furnace:", err); }
     };
 
-    // BARU: Logika koneksi MQTT yang ditingkatkan (Mengambil kredensial dari backend)
     useEffect(() => {
-        // Jangan lakukan apa-apa jika user belum siap atau koneksi sudah ada
         if (!user || mqttServiceRef.current) return;
 
         const initializeDashboard = async () => {
-            setIsLoading(true); // Tampilkan loading screen
+            setIsLoading(true);
             try {
                 const token = localStorage.getItem('token');
                 if (!token) throw new Error("Token otentikasi tidak ditemukan.");
-
-                // ====================================================================
-                // == 🚀 INTI PERUBAHAN: Jalankan kedua request secara paralel ==
-                // ====================================================================
-                // Promise.all akan menjalankan semua promise di dalamnya secara bersamaan
-                // dan menunggu semuanya selesai.
                 const [credsRes] = await Promise.all([
                     axios.get("http://localhost:5000/api/auth/mqtt-credentials", { 
                         headers: { 'x-auth-token': token } 
                     }),
-                    fetchFurnaceStatuses() // Fungsi ini juga dipanggil di sini secara paralel
+                    fetchFurnaceStatuses() 
                 ]);
                 
-                // Setelah Promise.all selesai, kita sudah punya kredensial DAN status furnace terbaru.
                 const credentials = credsRes.data;
 
-                // 2. Gunakan kredensial dari backend untuk koneksi
                 const url = import.meta.env.VITE_MQTT_BROKER_URL;
                 const options = {
                     username: credentials.username,
@@ -391,22 +366,20 @@ const Dashboard = () => {
                     onClose: () => setIsConnected(false),
                 };
 
-                // 3. Buat koneksi MQTT
+                // koneksi MQTT
                 mqttServiceRef.current = new MQTTService(url, options, callbacks);
                 mqttServiceRef.current.connect();
-                // Kita tidak perlu memanggil fetchFurnaceStatuses() lagi di sini karena sudah dijalankan di Promise.all
 
             } catch (err) {
                 console.error("Gagal inisialisasi koneksi:", err);
                 setError(err.response?.data?.message || "Gagal terhubung ke sistem monitoring.");
             } finally {
-                setIsLoading(false); // Sembunyikan loading screen
+                setIsLoading(false); 
             }
         };
 
         initializeDashboard();
 
-        // Fungsi cleanup (tetap sama)
         const cleanupMqtt = () => {
             if (mqttServiceRef.current) {
                 mqttServiceRef.current.disconnect();
@@ -461,11 +434,11 @@ const Dashboard = () => {
             return;
         }
         try {
-            const { suhu } = setpoints[furnace]; // Hanya mengambil suhu
-            if (suhu === "") { alert("Setpoint suhu tidak boleh kosong!"); return; } // Validasi hanya untuk suhu
+            const { suhu } = setpoints[furnace];
+            if (suhu === "") { alert("Setpoint suhu tidak boleh kosong!"); return; } 
             
             const topic = `setpoint/furnace/${furnace}`;
-            const payload = JSON.stringify({ suhu: Number(suhu) }); // Payload hanya berisi suhu
+            const payload = JSON.stringify({ suhu: Number(suhu) }); 
             mqttServiceRef.current?.publish(topic, payload);
             
             // Mengirim data ke backend (tanpa pressure_value)
@@ -476,14 +449,13 @@ const Dashboard = () => {
             });
             
             alert(`✅ Setpoint untuk ${furnace} berhasil dikirim!`);
-            window.location.reload(); // Auto-refresh halaman
+            window.location.reload(); 
 
         } catch (err) { 
             alert("Gagal mengirim setpoint!"); 
         }
     };
 
-    // BARU: Tampilkan loading screen jika data pengguna belum siap atau sedang memuat koneksi
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-sky-100">
@@ -492,7 +464,6 @@ const Dashboard = () => {
         )
     }
 
-    // BARU: Tampilkan error screen jika terjadi kesalahan otentikasi/koneksi
     if (error) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-red-100">
@@ -519,7 +490,6 @@ const Dashboard = () => {
                         const status = furnaceStatuses[furnace];
                         const isLockedByMe = status?.is_active && status?.active_userID === user.id;
                         const isLockedByOther = status?.is_active && status?.active_userID !== user.id;
-                        // BARU: Cek role pengguna untuk menonaktifkan kontrol
                         const isViewer = user.role === 'viewer';
                         
                         return (
@@ -543,7 +513,6 @@ const Dashboard = () => {
                                         {/* Tombol START (ON) */}
                                         <button
                                             onClick={() => handleStartSession(furnace)}
-                                            // DIPERBARUI: Tambahkan isViewer ke kondisi disabled
                                             disabled={status?.is_active || isLockedByOther || isViewer} 
                                             className={`
                                                 w-12 h-12 rounded-full text-white text-lg font-bold 
@@ -565,7 +534,6 @@ const Dashboard = () => {
                                         {/* Tombol STOP (OFF) */}
                                         <button
                                             onClick={() => handleEndSession(furnace)}
-                                            // DIPERBARUI: Tambahkan isViewer ke kondisi disabled
                                             disabled={!isLockedByMe || isLockedByOther || isViewer} 
                                             className={`
                                                 w-12 h-12 rounded-full text-white text-lg font-bold 
@@ -594,10 +562,10 @@ const Dashboard = () => {
                                         <div className="bg-gray-100 p-4 rounded-lg shadow-inner w-56 mt-4 border border-gray-300"> 
                                             <p className={`font-bold text-center text-lg mb-2 ${isLockedByMe ? 'text-red-600 animate-pulse' : 'text-gray-700'}`}>Setpoint</p>
                                             <div className="flex flex-col gap-2">
-                                                {/* DIPERBARUI: Tambahkan isViewer ke kondisi disabled */}
+                                                {/* isViewer ke kondisi disabled */}
                                                 <input type="number" placeholder="Suhu (°C)" value={setpoints[furnace].suhu} onChange={(e) => handleChange(furnace, "suhu", e.target.value)} className="border border-gray-400 rounded-md p-2 text-center disabled:bg-gray-200 disabled:cursor-not-allowed text-sm" disabled={!isLockedByMe || isLockedByOther || isViewer} />
                                             </div>
-                                            {/* DIPERBARUI: Tambahkan isViewer ke kondisi disabled */}
+                                            {/* isViewer ke kondisi disabled */}
                                             <button onClick={() => handleSubmit(furnace)} className="mt-3 w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm" disabled={!isLockedByMe || isLockedByOther || isViewer}>Kirim</button>
                                         </div>
                                     </div>

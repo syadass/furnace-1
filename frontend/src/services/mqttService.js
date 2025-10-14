@@ -1,16 +1,11 @@
 import mqtt from 'mqtt';
 
-/**
- * MQTTService Class
- * Membungkus semua logika koneksi, subscribing, dan publishing MQTT.
- * Menggunakan pola callback untuk berkomunikasi kembali dengan komponen UI.
- */
 export class MQTTService {
   constructor(brokerUrl, options, callbacks = {}) {
     this.client = null;
     this.brokerUrl = brokerUrl;
     this.options = options;
-    this.callbacks = callbacks; // { onConnect, onMessage, onClose, onError }
+    this.callbacks = callbacks; 
   }
 
   connect() {

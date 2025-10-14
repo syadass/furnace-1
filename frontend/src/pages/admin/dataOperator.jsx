@@ -70,7 +70,7 @@ export default function DataOperator() {
         <Header />
 
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">Data Operator</h2>
+          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">Daftar Operator</h2>
 
           <div className="bg-white shadow-xl rounded-2xl p-6">
             {/* Kontrol atas */}

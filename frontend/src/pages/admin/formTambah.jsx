@@ -56,9 +56,7 @@ export default function TambahOperator() {
         confirmPassword: "",
       });
 
-      // Navigate back to the previous page after 1 second
       setTimeout(() => {
-        // PERBAIKAN: Menggunakan navigate(-1) untuk kembali ke halaman sebelumnya
         navigate(-1); 
       }, 1000);
 
@@ -82,8 +80,6 @@ export default function TambahOperator() {
       confirmPassword: "",
     });
     setMessage("");
-    
-    // PERBAIKAN: Menggunakan navigate(-1) untuk kembali ke halaman sebelumnya
     navigate(-1);
   };
 
@@ -96,7 +92,7 @@ export default function TambahOperator() {
 
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">
-            Tambah Data Operator
+           Form Tambah Operator
           </h2>
 
           {message && (

@@ -84,7 +84,7 @@ export default function FormEdit() {
       <div className="flex-1 flex flex-col ml-64 pt-[60px]"> 
         <Header />
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">Edit User</h2>
+          <h2 className="text-2xl font-bold mb-6 text-[#3674B5]">Form Edit</h2>
           {message && (
             <div
               className={`mb-4 p-3 rounded ${

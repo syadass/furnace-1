@@ -1,14 +1,9 @@
 const Setpoint = require('../models/setpointModel');
 const { getClient } = require('../services/mqttService');
 
-/**
- * Membuat dan menyimpan setpoint baru dengan nilai suhu default, lalu mempublikasikannya ke MQTT.
- */
 exports.createSetpoint = (req, res) => {
-  // 1. Ambil data dari body request.
-  const { userID, furnace_id, temperature_value } = req.body; // Terima juga temperature_value dari frontend
+  const { userID, furnace_id, temperature_value } = req.body; 
   
-  // 2. Lakukan validasi data.
   if (!userID || !furnace_id || temperature_value === undefined) {
     return res.status(400).json({ 
       success: false, 
@@ -16,14 +11,14 @@ exports.createSetpoint = (req, res) => {
     });
   }
 
-  // 3. Siapkan data sebagai satu objek untuk disimpan. 'pressure_value' telah dihapus.
+  // Siapkan data sebagai satu objek untuk disimpan. 'pressure_value' telah dihapus.
   const setpointData = {
     userID,
     furnace_id,
-    temperature_value, // Gunakan nilai suhu dari frontend
+    temperature_value, 
   };
 
-  // 4. Panggil fungsi create dari model dengan SATU objek data.
+  // Panggil fungsi create dari model dengan SATU objek data.
   Setpoint.create(setpointData, (err, result) => {
     if (err) {
       console.error("❌ Gagal menyimpan setpoint ke database:", err);
@@ -35,13 +30,13 @@ exports.createSetpoint = (req, res) => {
 
     console.log(`💾 Setpoint berhasil disimpan ke DB. ID: ${result.insertId}`);
     
-    // 5. Setelah berhasil disimpan, publikasikan ke MQTT.
+    // Setelah berhasil disimpan, publikasikan ke MQTT.
     try {
       const mqttClient = getClient();
       const topic = `setpoint/furnace/${furnace_id}`;
       
       const payload = JSON.stringify({
-        suhu: temperature_value // Kirim suhu yang diterima dari frontend
+        suhu: temperature_value 
       });
 
       mqttClient.publish(topic, payload, { qos: 1 }, (publishErr) => {
@@ -77,9 +72,8 @@ exports.createSetpoint = (req, res) => {
   });
 };
 
-/**
- * Mengambil semua data setpoint dari database.
- */
+
+// Mengambil semua data setpoint dari database.
 exports.getSetpoints = (req, res) => {
   Setpoint.getAll((err, results) => {
     if (err) {
@@ -94,4 +88,21 @@ exports.getSetpoints = (req, res) => {
       data: results 
     });
   });
+};
+
+// hapus data setpoint setelah 1 bulan
+exports.manuallyCleanSetpoints = (req, res) => {
+    const daysToKeep = 30; 
+    
+    Setpoint.cleanOldSetpoints(daysToKeep, (err, result) => {
+        if (err) {
+            console.error('❌ Error saat membersihkan setpoint lama:', err);
+            return res.status(500).json({ message: 'Gagal membersihkan setpoint lama.' });
+        }
+        res.json({ 
+            success: true,
+            message: `Berhasil membersihkan setpoint yang lebih tua dari ${daysToKeep} hari (sekitar 1 bulan).`,
+            deletedRows: result.affectedRows
+        });
+    });
 };

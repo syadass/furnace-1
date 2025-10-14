@@ -1,4 +1,3 @@
-// components/admin/sidebar.jsx
 import { useState } from "react";
 import {
   FaTachometerAlt,
@@ -14,26 +13,18 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation(); 
-  
-  // 🚨 GRADIENT COLORS
-  // Warna Awal (Lebih Gelap)
-  const startColor = "#2c5a95"; // Biru gelap
-  // Warna Akhir (Lebih Terang/Sedang)
-  const endColor = "#3674B5"; // Biru utama (seperti permintaan Anda)
-  
-  // Warna untuk item yang aktif dan hover
-  const hoverColor = "hover:bg-[#2770d9]"; // Biru sedikit lebih terang
-  const activeColor = "bg-[#2770d9]"; // Biru terang untuk item yang aktif
-  const subMenuBg = "bg-[#1f4773]"; // Background sub-menu yang lebih gelap dari startColor
+  const startColor = "#2c5a95"; 
+  const endColor = "#3674B5";
+  const hoverColor = "hover:bg-[#2770d9]"; 
+  const activeColor = "bg-[#2770d9]"; 
+  const subMenuBg = "bg-[#1f4773]";
 
   const isActive = (path) => location.pathname === path;
   
-  // Cek apakah Manajamen Operator aktif (salah satu sub-menu aktif)
   const isManajemenOperatorActive = 
       location.pathname.startsWith("/admin/tambah-operator") || 
       location.pathname.startsWith("/admin/data-operator");
   
-  // State dropdown
   const [openMenu, setOpenMenu] = useState(isManajemenOperatorActive); 
 
   const handleLogout = () => {
@@ -43,11 +34,10 @@ const Sidebar = () => {
   };
 
   return (
-    // 🚨 IMPLEMENTASI GRADIENT DENGAN INLINE STYLE dan Tailwind class
     <aside 
         className={`w-64 text-white flex flex-col min-h-screen fixed top-[60px] left-0 z-10 shadow-xl`}
         style={{
-            backgroundImage: `linear-gradient(to bottom, ${startColor}, ${endColor})` // Gradasi Vertikal
+            backgroundImage: `linear-gradient(to bottom, ${startColor}, ${endColor})` 
         }}
     >
 
