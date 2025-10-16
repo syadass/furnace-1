@@ -24,7 +24,7 @@ const Header = () => {
       {/* Navigation */}
       <nav className="flex space-x-6 text-white font-medium">
         <NavLink
-          to="/operator/dashboard"
+          to="/viewer/dashboard"
           className={({ isActive }) =>
             `flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 transform ${
               isActive

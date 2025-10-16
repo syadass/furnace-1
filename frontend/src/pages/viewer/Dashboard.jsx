@@ -1,41 +1,38 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import Header from "../../components/viewer/Header"; 
-import { MQTTService } from "../../services/mqttService";
-import ScadaStyles from "../../components/viewer/ScadaStyles"; 
-import ThermometerVisual from "../../components/viewer/ThermometerVisual"; 
-import FurnaceAssembly from "../../components/viewer/FurnaceAssembly"; 
+import Header from "../../components/viewer/header";
+import ScadaStyles from "../../components/viewer/dashboard/ScadaStyles";
+import ThermometerVisual from "../../components/viewer/dashboard/ThermometerVisual";
+import FurnaceAssembly from "../../components/viewer/dashboard/FurnaceAssembly";
+import { useMqtt } from "../../services/mqttContext"; // <-- 1. Import hook useMqtt
 
 const ViewerDashboard = () => {
+    // --- State Lokal untuk Halaman Ini ---
     const [user, setUser] = useState(null);
-    const [liveData, setLiveData] = useState({
-        furnace1: { suhu: "0.0", tekanan: "0.00" },
-        furnace2: { suhu: "0.0", tekanan: "0.00" },
-        furnace3: { suhu: "0.0", tekanan: "0.00" },
-    });
-
-    const [isConnected, setIsConnected] = useState(false);
     const [furnaceStatuses, setFurnaceStatuses] = useState({});
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true); // Loading untuk otentikasi & status
     const [error, setError] = useState('');
 
-    const mqttServiceRef = useRef(null);
-    const furnaceList = ["furnace1", "furnace2", "furnace3"];
-    
-    // --- Authentication & User Effect ---
+    // --- 2. Ambil State MQTT dari Context ---
+    // Semua logika koneksi, liveData, dan isConnected sekarang datang dari sini.
+    const { 
+        liveData: mqttLiveData, 
+        isConnected: isMqttConnected, 
+        furnaceList 
+    } = useMqtt();
+
+    // --- Efek untuk Otentikasi Viewer ---
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                // Dekode token untuk mendapatkan data pengguna
                 const decodedToken = jwtDecode(token);
-                // Viewer Dashboard harus memastikan bahwa role adalah 'viewer'
                 if (decodedToken.role !== 'viewer') {
                     setError("Akses Ditolak: Anda tidak memiliki izin viewer.");
                     setIsLoading(false);
                 } else {
-                    setUser(decodedToken); 
+                    setUser(decodedToken);
                 }
             } catch (error) {
                 setError("Sesi Anda tidak valid. Silakan login kembali.");
@@ -47,114 +44,54 @@ const ViewerDashboard = () => {
         }
     }, []);
 
-    // --- Fetch Furnace Statuses ---
-    const fetchFurnaceStatuses = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-            const res = await axios.get("http://localhost:5000/api/furnaces/status", {
-                headers: { 'x-auth-token': token }
-            });
-            const statuses = res.data.reduce((acc, current) => {
-                acc[current.furnace_id] = current;
-                return acc;
-            }, {});
-            setFurnaceStatuses(statuses);
-        } catch (err) { console.error("Gagal mengambil status furnace:", err); }
-    };
-
-    // --- MQTT & Initialization Effect ---
+    // --- Efek untuk Mengambil Status Furnace (Logika Spesifik Halaman) ---
     useEffect(() => {
-        // HANYA inisialisasi jika user sudah didapatkan DAN bukan sedang proses inisialisasi
-        if (!user || user.role !== 'viewer' || mqttServiceRef.current) return;
+        if (!user) return; // Hanya jalankan jika user sudah terotentikasi
 
-        const initializeDashboard = async () => {
-            setIsLoading(true);
+        const fetchFurnaceStatuses = async () => {
             try {
                 const token = localStorage.getItem('token');
-                if (!token) throw new Error("Token otentikasi tidak ditemukan.");
-
-                const [credsRes] = await Promise.all([
-                    axios.get("http://localhost:5000/api/auth/mqtt-credentials", { 
-                        headers: { 'x-auth-token': token } 
-                    }),
-                    fetchFurnaceStatuses() // Ambil status awal
-                ]);
-                
-                const credentials = credsRes.data;
-                const url = import.meta.env.VITE_MQTT_BROKER_URL;
-                const options = {
-                    username: credentials.username,
-                    password: credentials.password,
-                    // Pastikan ClientID unik
-                    clientId: `viewer_client_${user.id}_${Math.random().toString(16).slice(2, 10)}`,
-                };
-                
-                const callbacks = {
-                    onConnect: () => {
-                        setIsConnected(true);
-                        // Subscribe ke semua data sensor furnace
-                        mqttServiceRef.current?.subscribe('sensor/furnace/#');
-                    },
-                    onMessage: (topic, payload) => {
-                        const topicParts = topic.split('/');
-                        // Hanya proses topik sensor yang valid
-                        if (topicParts.length === 3 && topicParts[0] === 'sensor' && topicParts[1] === 'furnace') {
-                            const furnaceId = topicParts[2];
-                            if (furnaceList.includes(furnaceId)) {
-                                try {
-                                    const data = JSON.parse(payload.toString());
-                                    const suhuValue = data.suhu !== undefined ? Number(data.suhu).toFixed(1) : "0.0";
-                                    const tekananValue = data.tekanan !== undefined ? Number(data.tekanan).toFixed(2) : "0.00";
-                                    setLiveData(prev => ({ ...prev, [furnaceId]: { suhu: suhuValue, tekanan: tekananValue } }));
-                                } catch (e) { console.error("Gagal parse data JSON dari MQTT", e); }
-                            }
-                        }
-                    },
-                    onClose: () => setIsConnected(false),
-                };
-
-                // Koneksi MQTT
-                mqttServiceRef.current = new MQTTService(url, options, callbacks);
-                mqttServiceRef.current.connect();
-
+                const res = await axios.get("http://localhost:5000/api/furnaces/status", {
+                    headers: { 'x-auth-token': token }
+                });
+                const statuses = res.data.reduce((acc, current) => {
+                    acc[current.furnace_id] = current;
+                    return acc;
+                }, {});
+                setFurnaceStatuses(statuses);
             } catch (err) {
-                console.error("Gagal inisialisasi koneksi:", err);
-                setError("Gagal terhubung ke sistem monitoring. Coba lagi nanti.");
+                console.error("Gagal mengambil status furnace:", err);
+                setError("Gagal memuat status tungku.");
             } finally {
-                setIsLoading(false);
+                setIsLoading(false); // Selesai loading setelah status didapat
             }
         };
 
-        initializeDashboard();
+        fetchFurnaceStatuses(); // Panggil sekali saat user berubah
 
-        const cleanupMqtt = () => {
-            if (mqttServiceRef.current) {
-                mqttServiceRef.current.disconnect();
-                mqttServiceRef.current = null;
-            }
-        };
-
-        // Refresh status furnace saat window kembali fokus
         const handleWindowFocus = () => fetchFurnaceStatuses();
         window.addEventListener('focus', handleWindowFocus);
 
         return () => {
-            cleanupMqtt();
             window.removeEventListener('focus', handleWindowFocus);
         };
-    }, [user]);
+    }, [user]); // Dijalankan setiap kali object 'user' berubah
 
     // --- Render Logic ---
-
     if (isLoading) {
-        return <div className="min-h-screen flex items-center justify-center bg-sky-100"><p className="text-xl font-semibold">Menyiapkan koneksi aman...</p></div>;
+        return <div className="min-h-screen flex items-center justify-center bg-sky-100"><p className="text-xl font-semibold">Memuat dasbor viewer...</p></div>;
     }
 
     if (error) {
         return <div className="min-h-screen flex items-center justify-center bg-red-100"><p className="text-xl font-semibold text-red-700">{error}</p></div>;
     }
-    
+
+    // Fallback untuk memastikan liveData punya struktur data default
+    const liveData = furnaceList.reduce((acc, furnaceId) => {
+        acc[furnaceId] = mqttLiveData[furnaceId] || { suhu: "0.0", tekanan: "0.00" };
+        return acc;
+    }, {});
+
     return (
         <div className="min-h-screen bg-sky-100 font-sans">
             <ScadaStyles />
@@ -163,8 +100,8 @@ const ViewerDashboard = () => {
                 <div className="flex justify-center items-center gap-4 mb-10">
                     <h1 className="text-3xl font-bold text-gray-800">Monitoring Furnace</h1>
                     <div className="flex items-center gap-2 p-2 bg-white rounded-full shadow-md">
-                        <span className={`h-4 w-4 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-                        <span className="font-semibold">{isConnected ? 'MQTT Connected' : 'MQTT Disconnected'}</span>
+                        <span className={`h-4 w-4 rounded-full ${isMqttConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                        <span className="font-semibold">{isMqttConnected ? 'MQTT Connected' : 'MQTT Disconnected'}</span>
                     </div>
                 </div>
 
@@ -175,7 +112,6 @@ const ViewerDashboard = () => {
 
                         return (
                             <div key={furnace} className="relative p-4" style={{ minWidth: '350px', minHeight: '400px' }}>
-                                
                                 {activeUser && (
                                     <div className="absolute top-2 right-2 flex items-center justify-center z-30">
                                         <p className="text-sm font-bold p-2 bg-yellow-600 text-white rounded-lg shadow-xl border border-yellow-400">
@@ -183,19 +119,17 @@ const ViewerDashboard = () => {
                                         </p>
                                     </div>
                                 )}
-
                                 <div className="flex justify-center items-center gap-8">
                                     <div className="relative z-10 pt-16">
                                         <ThermometerVisual value={liveData[furnace].suhu} max={100} />
                                     </div>
                                     <div className="flex flex-col items-center">
-                                        <FurnaceAssembly 
+                                        <FurnaceAssembly
                                             furnaceName={`Furnace ${index + 1}`}
                                             pressureValue={liveData[furnace].tekanan}
                                             pressureMax={10}
                                             isActive={status?.is_active}
                                         />
-                                        {/* Hilangkan input setpoint dan tombol Start/Stop */}
                                     </div>
                                 </div>
                             </div>

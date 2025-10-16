@@ -3,19 +3,22 @@ const router = express.Router();
 const logController = require('../controllers/logController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-
 router.get(
-  '/download/:furnace_id/:date', 
-  authMiddleware,
-  logController.downloadCSVByDate
+    '/sessions/:furnace_id/:date',
+    authMiddleware,
+    logController.getSessionsByDateAndFurnace
 );
-
-router.delete(
-    '/cleanup', 
-    authMiddleware, 
-    logController.manuallyCleanLogs
+router.get(
+    '/download/:session_id',
+    authMiddleware,
+    logController.downloadCSVBySession
 );
-
+router.get(
+    '/data/:session_id',
+    authMiddleware,
+    logController.getChartDataBySession
+);
+router.delete('/cleanup', authMiddleware, logController.manuallyCleanLogs);
 router.get('/', logController.getAllLogs);
 router.get('/user/:userID', logController.getLogsByUser);
 router.post('/', logController.createLog);

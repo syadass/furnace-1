@@ -11,36 +11,37 @@ import LihatDataOperator from './pages/admin/lihatDataOperator';
 import FormEdit from "./pages/admin/formEdit";
 import LogMonitoring from "./pages/operator/logMonitoring";
 
+import { MqttProvider } from './services/mqttContext'; // ✅ tambahkan ini
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Redirect "/" ke "/login" */}
-        <Route path="/" element={<Navigate to="/login" />} />
+    <MqttProvider> {/* ✅ Bungkus semua komponen yang butuh MQTT */}
+      <Router>
+        <Routes>
+          {/* Redirect "/" ke "/login" */}
+          <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* Login */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Role-based Routes */}
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/operator/dashboard" element={<OperatorDashboard />} />
-        <Route path="/viewer/dashboard" element={<ViewerDashboard />} />
+          {/* Login */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* Role-based Routes */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/operator/dashboard" element={<OperatorDashboard />} />
+          <Route path="/viewer/dashboard" element={<ViewerDashboard />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin/tambah-operator" element={<TambahOperator />} />
-        <Route path="/admin/data-operator" element={<DataOperator />} />
-        <Route path="/admin/form-tambah" element={<FormTambah />} />
-        <Route path="/admin/form-edit/:id" element={<FormEdit />} />
-        <Route path="/admin/lihat-data-operator" element={<LihatDataOperator />} />
+          {/* Admin Routes */}
+          <Route path="/admin/tambah-operator" element={<TambahOperator />} />
+          <Route path="/admin/data-operator" element={<DataOperator />} />
+          <Route path="/admin/form-tambah" element={<FormTambah />} />
+          <Route path="/admin/form-edit/:id" element={<FormEdit />} />
+          <Route path="/admin/lihat-data-operator" element={<LihatDataOperator />} />
 
-        {/* Operator Routes */}
-        <Route path="/log-monitoring" element={<LogMonitoring />} />
-
-      </Routes>
-    </Router>
+          {/* Operator Routes */}
+          <Route path="/log-monitoring" element={<LogMonitoring />} />
+        </Routes>
+      </Router>
+    </MqttProvider>
   );
 }
 
 export default App;
-
-
