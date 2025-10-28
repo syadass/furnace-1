@@ -1,6 +1,6 @@
 import React from 'react';
-import ThermometerVisual from './ThermometerVisual';
-import FurnaceAssembly from './FurnaceAssembly';
+import ThermometerVisual from './thermometerVisual';
+import FurnaceAssembly from './furnaceAssembly';
 
 const FurnaceCard = ({
     furnace,
@@ -17,6 +17,10 @@ const FurnaceCard = ({
     const isLockedByMe = status?.is_active && status?.active_userID === user?.id;
     const isLockedByOther = status?.is_active && status?.active_userID !== user?.id;
     const isViewer = user?.role === 'viewer';
+
+    // PERBAIKAN: Baca state 'setpoints' dengan aman.
+    // Ini mencegah error jika setpoints[furnace] belum ada.
+    const currentSetpoint = setpoints[furnace] || { suhu: "" };
 
     return (
         <div className={`relative p-4 ${isLockedByOther ? 'grayscale-locked' : ''}`} style={{ minWidth: '450px', minHeight: '400px' }} >
@@ -44,7 +48,15 @@ const FurnaceCard = ({
                     <div className="bg-gray-100 p-4 rounded-lg shadow-inner w-56 mt-4 border border-gray-300">
                         <p className={`font-bold text-center text-lg mb-2 ${isLockedByMe ? 'text-red-600 animate-pulse' : 'text-gray-700'}`}>Setpoint</p>
                         <div className="flex flex-col gap-2">
-                            <input type="number" placeholder="Suhu (°C)" value={setpoints[furnace].suhu} onChange={(e) => onSetpointChange(furnace, "suhu", e.target.value)} className="border border-gray-400 rounded-md p-2 text-center disabled:bg-gray-200 disabled:cursor-not-allowed text-sm" disabled={!isLockedByMe || isLockedByOther || isViewer} />
+                            {/* PERBAIKAN: Gunakan 'currentSetpoint' yang sudah aman */}
+                            <input 
+                                type="number" 
+                                placeholder="Suhu (°C)" 
+                                value={currentSetpoint.suhu} 
+                                onChange={(e) => onSetpointChange(furnace, "suhu", e.target.value)} 
+                                className="border border-gray-400 rounded-md p-2 text-center disabled:bg-gray-200 disabled:cursor-not-allowed text-sm" 
+                                disabled={!isLockedByMe || isLockedByOther || isViewer} 
+                            />
                         </div>
                         <button onClick={() => onSetpointSubmit(furnace)} className="mt-3 w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm" disabled={!isLockedByMe || isLockedByOther || isViewer}>Kirim</button>
                     </div>

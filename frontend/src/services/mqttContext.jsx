@@ -14,7 +14,7 @@ export const MqttProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const furnaceList = ["furnace1", "furnace2", "furnace3"];
+    const furnaceList = ["furnace1", "furnace2", "furnace3", "furnace4"];
 
     useEffect(() => {
         const token = localStorage.getItem('token');

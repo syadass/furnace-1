@@ -1,6 +1,6 @@
 // src/components/admin/Sidebar.jsx
 
-import { useState } from "react"; // 1. Import useState
+import { useState } from "react";
 import {
   FaTachometerAlt,
   FaUserCog,
@@ -9,9 +9,9 @@ import {
   FaSignOutAlt,
   FaChevronDown,
   FaChevronRight,
+  FaHistory, // --- TAMBAHKAN INI ---
 } from "react-icons/fa";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-// 2. Import komponen modal (pastikan path ini benar)
 import LogoutConfirmationModal from "../LogoutConfirmationModal";
 
 const Sidebar = () => {
@@ -30,20 +30,16 @@ const Sidebar = () => {
     location.pathname.startsWith("/admin/data-operator");
 
   const [openMenu, setOpenMenu] = useState(isManajemenOperatorActive);
-  
-  // 3. Tambahkan state untuk mengontrol visibilitas modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 4. Ganti nama fungsi ini menjadi handleLogoutConfirm
   const handleLogoutConfirm = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setIsModalOpen(false); // Tutup modal setelah logout
+    setIsModalOpen(false);
     navigate("/login");
   };
 
   return (
-    // 5. Gunakan React Fragment agar bisa merender Sidebar dan Modal
     <>
       <aside
         className={`w-64 text-white flex flex-col min-h-screen fixed top-[60px] left-0 z-10 shadow-xl`}
@@ -107,10 +103,24 @@ const Sidebar = () => {
               )}
             </li>
 
+            {/* --- BARU: Menu Riwayat Akses --- */}
+            <li className="mt-2"> {/* Menambahkan sedikit margin atas seperti item lainnya */}
+              <Link
+                to="/admin/riwayat-akses" // Pastikan path ini sesuai dengan route Anda
+                className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-base ${hoverColor} ${
+                  isActive("/admin/riwayat-akses") ? activeColor : ""
+                }`}
+              >
+                <FaHistory className="text-xl" /> Riwayat Akses
+              </Link>
+            </li>
+            {/* --- AKHIR BAGIAN BARU --- */}
+
+
             {/* Tombol Logout */}
             <li className="pt-4 border-t border-white border-opacity-30 mt-4">
               <button
-                onClick={() => setIsModalOpen(true)} // 6. Ubah onClick untuk membuka modal
+                onClick={() => setIsModalOpen(true)}
                 className="flex items-center gap-3 p-3 text-base bg-red-600 hover:bg-red-700 rounded-lg w-full text-left transition-colors shadow-lg"
               >
                 <FaSignOutAlt className="text-xl" /> Logout
@@ -120,7 +130,7 @@ const Sidebar = () => {
         </nav>
       </aside>
 
-      {/* 7. Render komponen modal di sini */}
+      {/* Render komponen modal di sini */}
       <LogoutConfirmationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

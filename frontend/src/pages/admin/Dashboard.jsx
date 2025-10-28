@@ -6,15 +6,18 @@ import { FaUsers, FaEye, FaPlus, FaEdit, FaTrash, FaChevronLeft, FaChevronRight 
 import axios from "axios";
 
 const Dashboard = () => {
+  // State HANYA UNTUK DATA USER
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [entries, setEntries] = useState(5);
   const [loadingDelete, setLoadingDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers();
+    // fetchAccessLogs() DIHAPUS DARI SINI
   }, []);
 
   const fetchUsers = async () => {
@@ -26,6 +29,9 @@ const Dashboard = () => {
     }
   };
 
+  // SEMUA FUNGSI DAN LOGIKA accessLogs DIHAPUS DARI SINI
+
+  // Logika Data User (Tetap Ada)
   const operatorCount = users.filter((u) => {
     const roleVal = (u.role || u.role_name || u.level || u.tipe || "").toString().toLowerCase().trim();
     return roleVal === "operator";
@@ -44,7 +50,6 @@ const Dashboard = () => {
 
   const handleDelete = async (userID, nama) => {
     if (!window.confirm(`Apakah Anda yakin ingin menghapus ${nama}?`)) return;
-
     try {
       setLoadingDelete(userID);
       await axios.delete(`http://localhost:5000/api/users/${userID}`);
@@ -62,10 +67,10 @@ const Dashboard = () => {
     <div className="flex min-h-screen bg-blue-50">
       <Sidebar />
       <div className="flex-1 flex flex-col ml-64 pt-[60px]">
-       <Header />
+        <Header />
         <main className="p-6 flex-1">
           <h1 className="text-3xl font-bold mb-8 text-[#3674B5]">Dashboard</h1>
-          {/* Cards */}
+          {/* Cards (Tetap Ada) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {[
               { icon: FaUsers, label: "Operator Terdaftar", value: operatorCount, bg: "from-[#3674B5] to-[#133E87]" },
@@ -92,11 +97,11 @@ const Dashboard = () => {
               );
             })}
           </div>
-          {/* Riwayat */}
+          
+          {/* Riwayat Pendaftaran (Tetap Ada) */}
           <h2 className="text-2xl font-bold mb-4 text-[#3674B5]">Riwayat Pendaftaran Terakhir</h2>
-
           <div className="bg-white shadow-xl rounded-2xl p-6">
-            {/* Kontrol atas */}
+            {/* Kontrol atas (User) */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
               <div>
                 <label className="text-sm text-gray-600">
@@ -132,7 +137,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Tabel */}
+            {/* Tabel (User) */}
             <div className="overflow-x-auto">
               <table className="w-full rounded-lg overflow-hidden shadow-sm">
                 <thead>
@@ -190,7 +195,7 @@ const Dashboard = () => {
               </table>
             </div>
 
-            {/* Info bawah + Pagination */}
+            {/* Info bawah + Pagination (User) */}
             <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm text-gray-600">
               <p>
                 Lihat {startIndex + 1} dari {filteredUsers.length} entri
@@ -223,6 +228,9 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+          
+          {/* SEMUA BAGIAN JSX RIWAYAT AKSES DIHAPUS DARI SINI */}
+
         </main>
       </div>
     </div>
