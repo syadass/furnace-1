@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { getClient } = require('../services/mqttService');
+const { Parser } = require('json2csv');
 
 exports.getFurnaceStatus = (req, res) => {
   const query = `
@@ -170,5 +171,67 @@ exports.getAllAccessLogs = (req, res) => {
     }
     // Kirim data yang sudah di-join ke frontend
     res.json(results);
+  });
+};
+
+// --- ✨ FUNGSI BARU UNTUK DOWNLOAD CSV ---
+exports.downloadAccessLogsCSV = (req, res) => {
+  const query = `
+    SELECT
+        sh.session_id,
+        sh.furnace_id,
+        sh.startTime AS waktu_mulai,
+        sh.endTime AS waktu_selesai,
+        u.nama_lengkap AS nama_operator
+    FROM session_history sh
+    LEFT JOIN users u ON sh.userID = u.userID
+    ORDER BY sh.startTime DESC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching data for CSV download:", err);
+      return res.status(500).json({ message: "Gagal mengambil data untuk diunduh." });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Tidak ada data riwayat akses untuk diunduh." });
+    }
+
+    const formattedResults = results.map(row => ({
+        ...row,
+        nama_operator: row.nama_operator || '(User Dihapus)',
+        waktu_mulai: row.waktu_mulai ? new Date(row.waktu_mulai).toLocaleString("id-ID", { timeZone: 'Asia/Jakarta' }) : '',
+        waktu_selesai: row.waktu_selesai ? new Date(row.waktu_selesai).toLocaleString("id-ID", { timeZone: 'Asia/Jakarta' }) : 'Masih Berjalan'
+    }));
+
+    const fields = [
+      { label: 'ID Sesi', value: 'session_id' },
+      { label: 'Nama Operator', value: 'nama_operator' },
+      { label: 'ID Furnace', value: 'furnace_id' },
+      { label: 'Waktu Mulai', value: 'waktu_mulai' },
+      { label: 'Waktu Selesai', value: 'waktu_selesai' }
+    ];
+
+    const json2csvParser = new Parser({
+        fields,
+        delimiter: ';', // Menggunakan titik koma
+        withBOM: true // Menambahkan BOM
+    });
+
+    try {
+        const csv = json2csvParser.parse(formattedResults);
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+        const fileName = `riwayat_akses_furnace_${timestamp}.csv`;
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment(fileName);
+        res.send(csv);
+
+    } catch (parseErr) {
+        console.error("Error converting data to CSV:", parseErr);
+        res.status(500).json({ message: "Gagal membuat file CSV." });
+    }
   });
 };

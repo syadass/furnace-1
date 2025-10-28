@@ -1,40 +1,116 @@
-// pages/admin/RiwayatAkses.jsx
+// pages/admin/riwayatAkses.jsx
 
 import { useEffect, useState } from "react";
-import Sidebar from "../../components/admin/sidebar"; // Pastikan path ini benar
-import Header from "../../components/admin/header"; // Pastikan path ini benar
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import Sidebar from "../../components/admin/sidebar";
+import Header from "../../components/admin/header";
+import { FaChevronLeft, FaChevronRight, FaDownload } from "react-icons/fa";
 import axios from "axios";
+// Library PapaParse TIDAK DIPERLUKAN LAGI untuk fungsi download ini
+import { saveAs } from 'file-saver';
 
 const RiwayatAkses = () => {
-  // State HANYA untuk Riwayat Akses Furnace
   const [accessLogs, setAccessLogs] = useState([]);
   const [searchLogs, setSearchLogs] = useState("");
   const [entriesLogs, setEntriesLogs] = useState(5);
   const [currentPageLogs, setCurrentPageLogs] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     fetchAccessLogs();
   }, []);
 
-  // Fungsi untuk fetch riwayat akses
+  // Fungsi untuk fetch data tabel (tidak berubah)
   const fetchAccessLogs = async () => {
     try {
-      // --- ✨ PERUBAHAN 1: URL DIPERBAIKI ---
-      const res = await axios.get("http://localhost:5000/api/furnaces/access-logs");
+      const token = localStorage.getItem('token');
+      console.log("Mencoba fetch data tabel dengan token:", token);
+      if (!token) {
+        console.error("Token tidak ditemukan. Silakan login ulang.");
+        return;
+      }
+      const res = await axios.get("http://localhost:5000/api/furnaces/access-logs", {
+        headers: { 'x-auth-token': token }
+      });
       setAccessLogs(res.data);
     } catch (err) {
       console.error("Gagal fetch access logs:", err);
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        console.error("Token ditolak oleh server. Kemungkinan kedaluwarsa atau tidak valid.");
+      }
     }
   };
 
-  // Logika untuk filtering dan pagination Riwayat Akses
+  // --- ✨ FUNGSI DOWNLOAD YANG SUDAH DISESUAIKAN --- ✨
+  const handleDownloadCSV = async () => {
+    setIsDownloading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("Token tidak ditemukan untuk download.");
+        alert("Sesi Anda habis, silakan login ulang.");
+        setIsDownloading(false);
+        return;
+      }
+
+      // Panggil API backend, minta response sebagai 'blob' (file)
+      const response = await axios.get("http://localhost:5000/api/furnaces/access-logs/download", {
+        headers: {
+          'x-auth-token': token
+        },
+        responseType: 'blob', // Penting: minta data sebagai file
+      });
+
+      // Ambil nama file dari header 'Content-Disposition'
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `riwayat_akses_furnace_${Date.now()}.csv`; // Nama default
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (fileNameMatch && fileNameMatch.length === 2) {
+          fileName = fileNameMatch[1];
+        }
+      }
+
+      // Langsung simpan blob yang diterima dari backend
+      saveAs(response.data, fileName);
+
+    } catch (err) {
+      console.error("Gagal mengunduh CSV:", err);
+      // Cek jika error karena tidak ada data (404 dari backend)
+      if (err.response && err.response.status === 404) {
+        // Coba baca pesan error dari response jika backend mengirim JSON
+        try {
+          // Response error 404 mungkin berupa JSON, coba parse
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const errorData = JSON.parse(reader.result);
+              alert(errorData.message || "Tidak ada data riwayat akses untuk diunduh.");
+            } catch (jsonParseError) {
+              alert("Tidak ada data riwayat akses untuk diunduh (error backend).");
+            }
+          }
+          reader.onerror = () => {
+            alert("Tidak ada data riwayat akses untuk diunduh (error baca response).");
+          }
+          reader.readAsText(err.response.data); // Baca blob sebagai teks
+        } catch (readError) {
+           alert("Tidak ada data riwayat akses untuk diunduh (error frontend).");
+         }
+      } else {
+         alert("Terjadi kesalahan saat mencoba mengunduh data CSV.");
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  // --- ✨ AKHIR FUNGSI DOWNLOAD --- ✨
+
+  // Logika untuk filtering dan pagination (tidak berubah)
   const filteredLogs = accessLogs.filter(
     (log) =>
       (log.nama_operator?.toLowerCase() || "").includes(searchLogs.toLowerCase()) ||
       (log.furnace_id?.toString().toLowerCase() || "").includes(searchLogs.toLowerCase())
   );
-
   const totalPagesLogs = Math.ceil(filteredLogs.length / entriesLogs);
   const startIndexLogs = (currentPageLogs - 1) * entriesLogs;
   const currentLogs = filteredLogs.slice(startIndexLogs, startIndexLogs + entriesLogs);
@@ -45,15 +121,13 @@ const RiwayatAkses = () => {
       <div className="flex-1 flex flex-col ml-64 pt-[60px]">
         <Header />
         <main className="p-6 flex-1">
-          {/* --- Judul Halaman --- */}
           <h1 className="text-3xl font-bold mb-8 text-[#3674B5]">
             Riwayat Akses Furnace Operator
           </h1>
-
-          {/* --- Kontainer Tabel Riwayat Akses --- */}
           <div className="bg-white shadow-xl rounded-2xl p-6">
-            {/* Kontrol atas (Logs) */}
+            {/* Kontrol Atas: Select, Cari, Tombol Download */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+              {/* Select Entries */}
               <div>
                 <label className="text-sm text-gray-600">
                   Lihat{" "}
@@ -73,6 +147,7 @@ const RiwayatAkses = () => {
                   entri
                 </label>
               </div>
+              {/* Search & Download */}
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600">Cari:</label>
                 <input
@@ -85,10 +160,22 @@ const RiwayatAkses = () => {
                   className="border rounded-lg px-3 py-2 text-sm focus:ring focus:ring-[#3674B5] shadow-sm transition"
                   placeholder="Cari operator/furnace..."
                 />
+                <button
+                  onClick={handleDownloadCSV}
+                  disabled={isDownloading}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg shadow-md transition transform hover:scale-105 ${
+                    isDownloading
+                      ? "bg-green-300 cursor-not-allowed"
+                      : "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
+                  }`}
+                >
+                  <FaDownload />
+                  {isDownloading ? "Mengunduh..." : "Download CSV"}
+                </button>
               </div>
             </div>
 
-            {/* Tabel (Logs) */}
+            {/* Tabel */}
             <div className="overflow-x-auto">
               <table className="w-full rounded-lg overflow-hidden shadow-sm">
                 <thead>
@@ -103,14 +190,12 @@ const RiwayatAkses = () => {
                 <tbody>
                   {currentLogs.map((row, i) => (
                     <tr
-                      // --- ✨ PERUBAHAN 2: KEY DIPERBAIKI ---
-                      key={row.session_id || i} // Gunakan session_id dari backend
+                      key={row.session_id || i}
                       className={`transition-all duration-300 hover:bg-blue-50 cursor-pointer ${
                         i % 2 === 0 ? "bg-gray-100" : "bg-white"
                       }`}
                     >
                       <td className="p-3 text-center">{startIndexLogs + i + 1}</td>
-                      {/* Properti ini (row.nama_operator, dll) sudah sesuai dengan query backend */}
                       <td className="p-3">{row.nama_operator || '(User Dihapus)'}</td>
                       <td className="p-3">{row.furnace_id}</td>
                       <td className="p-3">{new Date(row.waktu_mulai).toLocaleString("id-ID")}</td>
@@ -132,12 +217,11 @@ const RiwayatAkses = () => {
               </table>
             </div>
 
-            {/* Info bawah + Pagination (Logs) */}
+            {/* Pagination */}
             <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm text-gray-600">
               <p>
                 Lihat {startIndexLogs + 1} dari {filteredLogs.length} entri
               </p>
-
               <div className="flex items-center gap-2 mt-2 md:mt-0">
                 <button
                   disabled={currentPageLogs === 1}
@@ -148,11 +232,9 @@ const RiwayatAkses = () => {
                 >
                   <FaChevronLeft size={16} />
                 </button>
-
                 <div className="px-3 py-1 text-white font-medium rounded-lg shadow" style={{ backgroundColor: "#3674B5" }}>
                   {currentPageLogs}
                 </div>
-
                 <button
                   disabled={currentPageLogs === totalPagesLogs || totalPagesLogs === 0}
                   onClick={() => setCurrentPageLogs((p) => p + 1)}
