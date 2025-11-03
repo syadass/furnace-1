@@ -59,7 +59,7 @@ const PressureGaugeVisual = ({ value = 0, max = 10 }) => {
             </div>
             {/* Label Nilai */}
             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold text-gray-800 bg-gray-200 px-2 py-1 rounded-md shadow-xl border border-gray-400">
-                {Number(value).toFixed(2)} bar
+                {Number(value).toFixed(2)} MPa
             </span>
         </div>
     );

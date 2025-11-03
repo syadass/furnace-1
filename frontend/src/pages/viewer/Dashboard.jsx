@@ -108,7 +108,11 @@ const ViewerDashboard = () => {
                 <div className="flex flex-wrap justify-center items-start gap-16">
                     {furnaceList.map((furnace, index) => {
                         const status = furnaceStatuses[furnace];
-                        const activeUser = status?.is_active ? status?.active_username || `User ${status.active_userID}` : null;
+                        
+                        // ✅ PERUBAHAN DI SINI: Sekarang menggunakan active_user_fullname
+                        const activeUser = status?.is_active 
+                            ? status?.active_user_fullname || `User ${status.active_userID}` 
+                            : null;
 
                         return (
                             <div key={furnace} className="relative p-4" style={{ minWidth: '350px', minHeight: '400px' }}>

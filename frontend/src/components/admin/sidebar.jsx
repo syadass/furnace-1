@@ -1,6 +1,6 @@
 // src/components/admin/Sidebar.jsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // <-- Tambahkan useEffect
 import {
   FaTachometerAlt,
   FaUserCog,
@@ -9,7 +9,7 @@ import {
   FaSignOutAlt,
   FaChevronDown,
   FaChevronRight,
-  FaHistory, // --- TAMBAHKAN INI ---
+  FaHistory,
 } from "react-icons/fa";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import LogoutConfirmationModal from "../LogoutConfirmationModal";
@@ -25,16 +25,32 @@ const Sidebar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  // --- ✨ PERBARUI KONDISI INI --- ✨
+  // Sekarang cek apakah path dimulai dengan salah satu dari tiga opsi ini
   const isManajemenOperatorActive =
     location.pathname.startsWith("/admin/tambah-operator") ||
-    location.pathname.startsWith("/admin/data-operator");
+    location.pathname.startsWith("/admin/data-operator") ||
+    location.pathname.startsWith("/admin/riwayat-akses"); // <-- Tambahkan ini
 
+  // Gunakan state untuk membuka menu, inisialisasi berdasarkan kondisi aktif
   const [openMenu, setOpenMenu] = useState(isManajemenOperatorActive);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // --- ✨ TAMBAHAN: Sinkronkan state openMenu jika URL berubah --- ✨
+  useEffect(() => {
+    // Jika salah satu submenu aktif saat URL berubah, buka dropdown-nya
+    if (isManajemenOperatorActive) {
+      setOpenMenu(true);
+    }
+    // Opsional: Jika Anda ingin menutup dropdown saat navigasi ke menu lain, tambahkan else:
+    // else {
+    //   setOpenMenu(false);
+    // }
+  }, [location.pathname, isManajemenOperatorActive]); // Jalankan efek saat path berubah
+
   const handleLogoutConfirm = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("user"); // Hapus user juga jika disimpan
     setIsModalOpen(false);
     navigate("/login");
   };
@@ -67,6 +83,7 @@ const Sidebar = () => {
               <button
                 onClick={() => setOpenMenu(!openMenu)}
                 className={`flex items-center justify-between w-full p-3 rounded-lg transition-colors text-base ${hoverColor} ${
+                  // Tetap gunakan isManajemenOperatorActive untuk highlight tombol utama
                   isManajemenOperatorActive ? activeColor : ""
                 }`}
               >
@@ -79,16 +96,19 @@ const Sidebar = () => {
               {/* Submenu Dropdown */}
               {openMenu && (
                 <ul className={`ml-3 mt-1 space-y-1 ${subMenuBg} rounded-b-lg p-1`}>
+                  {/* Tambah Operator */}
                   <li>
                     <Link
                       to="/admin/tambah-operator"
                       className={`flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-[#2770d9] ${
+                        // Gunakan isActive untuk highlight submenu spesifik
                         isActive("/admin/tambah-operator") ? activeColor : ""
                       }`}
                     >
                       <FaUserPlus /> Tambah Operator
                     </Link>
                   </li>
+                  {/* Daftar Operator */}
                   <li>
                     <Link
                       to="/admin/data-operator"
@@ -99,14 +119,28 @@ const Sidebar = () => {
                       <FaList /> Daftar Operator
                     </Link>
                   </li>
+
+                  {/* --- ✨ PINDAHKAN RIWAYAT AKSES KE SINI --- ✨ */}
+                  <li>
+                    <Link
+                      to="/admin/riwayat-akses"
+                      className={`flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-[#2770d9] ${
+                        isActive("/admin/riwayat-akses") ? activeColor : ""
+                      }`}
+                    >
+                      <FaHistory /> Riwayat Akses
+                    </Link>
+                  </li>
+                  {/* --- ✨ AKHIR PEMINDAHAN --- ✨ */}
+
                 </ul>
               )}
             </li>
 
-            {/* --- BARU: Menu Riwayat Akses --- */}
-            <li className="mt-2"> {/* Menambahkan sedikit margin atas seperti item lainnya */}
+            {/* --- HAPUS BAGIAN INI ---
+            <li className="mt-2">
               <Link
-                to="/admin/riwayat-akses" // Pastikan path ini sesuai dengan route Anda
+                to="/admin/riwayat-akses"
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-base ${hoverColor} ${
                   isActive("/admin/riwayat-akses") ? activeColor : ""
                 }`}
@@ -114,8 +148,7 @@ const Sidebar = () => {
                 <FaHistory className="text-xl" /> Riwayat Akses
               </Link>
             </li>
-            {/* --- AKHIR BAGIAN BARU --- */}
-
+            */}
 
             {/* Tombol Logout */}
             <li className="pt-4 border-t border-white border-opacity-30 mt-4">
@@ -130,7 +163,7 @@ const Sidebar = () => {
         </nav>
       </aside>
 
-      {/* Render komponen modal di sini */}
+      {/* Modal Logout */}
       <LogoutConfirmationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
